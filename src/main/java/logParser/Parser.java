@@ -7,10 +7,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public final class Parser {
-    public void parse(String pathToFile) throws IOException {
-        final List<String> textResult = readTextFromFile(pathToFile);
+    public void parse(String pathToFile, String mask) throws IOException {
+        final List<String> text = readTextFromFile(pathToFile);
+        final List<String> foundStrings = findStringsThatContains(text, mask);
     }
 
     private List<String> readTextFromFile(String pathToFile) throws IOException {
@@ -43,5 +45,16 @@ public final class Parser {
 
     private boolean checkFileExtension(File file) {
         return (file.isFile() && file.getName().endsWith(".txt") || file.getName().endsWith(".log"));
+    }
+
+    private List<String> findStringsThatContains(List<String> text, String mask) {
+        List<String> result = new ArrayList<>();
+        Pattern pattern = Pattern.compile(mask);
+        for (String s : text) {
+            if (pattern.matcher(s).matches()) {
+                result.add(s);
+            }
+        }
+        return result;
     }
 }
