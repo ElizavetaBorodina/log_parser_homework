@@ -12,13 +12,13 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public final class Parser {
-    public void parse(String pathToFile, String mask) throws IOException {
-        final List<String> text = readTextFromFile(pathToFile);
+    public void parse(String pathToFile, String fileTypes, String mask) throws IOException {
+        final List<String> text = readTextFromFile(pathToFile, fileTypes);
         final List<String> foundStrings = findStringsThatContains(text, mask);
-
+        saveStringsToFile(createFileForFoundStrings(), foundStrings);
     }
 
-    private List<String> readTextFromFile(String pathToFile) throws IOException {
+    private List<String> readTextFromFile(String pathToFile, String fileTypes) throws IOException {
         final List<File> logFiles = new ArrayList<>();
 
         final Path path = Paths.get(pathToFile);
@@ -26,12 +26,12 @@ public final class Parser {
 
         if (fileFromPath.isDirectory()) {
             for (File file : fileFromPath.listFiles()) {
-                if (checkFileExtension(file)) {
+                if (checkFileExtension(file, fileTypes)) {
                     logFiles.add(file);
                 }
             }
         } else if (fileFromPath.isFile()) {
-            if (checkFileExtension(fileFromPath)) {
+            if (checkFileExtension(fileFromPath, fileTypes)) {
                 logFiles.add(fileFromPath);
             }
         } else {
@@ -52,7 +52,7 @@ public final class Parser {
             long size = logFile.length();
             long i = 0;
 
-            while(line != null) {
+            while (line != null) {
                 text.add(line);
                 i += line.length() + System.lineSeparator().length();
                 System.out.println(i + " out of " + size + " (file " + fileCounter + " out of " + logFiles.size() + ")");
@@ -63,8 +63,9 @@ public final class Parser {
         return text;
     }
 
-    private boolean checkFileExtension(File file) {
-        return (file.isFile() && file.getName().endsWith(".txt") || file.getName().endsWith(".log"));
+    private boolean checkFileExtension(File file, String fileTypes) {
+        Pattern pattern = Pattern.compile(fileTypes);
+        return file.isFile() && pattern.matcher(file.getName()).matches();
     }
 
     private List<String> findStringsThatContains(List<String> text, String mask) {
@@ -76,5 +77,18 @@ public final class Parser {
             }
         }
         return result;
+    }
+
+    private File createFileForFoundStrings() throws IOException {
+        final File file = new File("found_strings.txt");
+        if (file.exists()) {
+            file.delete();
+        }
+        file.createNewFile();
+        return file;
+    }
+
+    private void saveStringsToFile(File file, List<String> strings) throws IOException {
+        Files.write(file.toPath(), strings);
     }
 }
